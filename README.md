@@ -2,6 +2,11 @@
 
 Scan board game barcodes with your phone camera and identify them on [BoardGameGeek](https://boardgamegeek.com).
 
+<div align="center">
+  <img src="docs/images/mobile.png" alt="Mobile view" width="280" />
+  <img src="docs/images/desktop.png" alt="Desktop view" width="480" />
+</div>
+
 ## How It Works
 
 1. Open the app on your phone and tap **Start Scanning**
@@ -10,6 +15,10 @@ Scan board game barcodes with your phone camera and identify them on [BoardGameG
 4. If multiple matches are found, pick the right one from the options shown
 5. Keep scanning as many games as you want
 6. Export your list as CSV or copy to clipboard
+
+## Adding to Your BGG Collection
+
+After scanning, export your list as CSV or copy it to clipboard, then use [bgg-collection-updater](https://github.com/aabuhijleh/bgg-collection-updater) to bulk-add the games to your BoardGameGeek collection.
 
 ## Setup
 
