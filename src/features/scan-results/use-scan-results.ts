@@ -35,6 +35,10 @@ export function useScanResults() {
     updateResult(id, { status: "skipped", candidates: undefined });
   };
 
+  const removeResult = (id: string) => {
+    setResults((prev) => prev.filter((r) => r.id !== id));
+  };
+
   const clearResults = () => {
     setResults([]);
   };
@@ -45,6 +49,7 @@ export function useScanResults() {
     updateResult,
     resolveAmbiguity,
     skipResult,
+    removeResult,
     clearResults,
   };
 }

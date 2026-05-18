@@ -49,7 +49,7 @@ export function ScannerPanel({
       )}
 
       <div className="overflow-hidden rounded-2xl border">
-        <div className="relative aspect-[4/3] bg-black/5 dark:bg-white/5">
+        <div className="relative aspect-[4/3] bg-black/5 md:aspect-[21/9] dark:bg-white/5">
           <video
             ref={videoRef}
             autoPlay

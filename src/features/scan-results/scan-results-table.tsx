@@ -20,11 +20,13 @@ import {
   ExternalLink,
   Loader2,
   RotateCcw,
+  Trash2,
 } from "lucide-react";
 import { Fragment, useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
+import { Card, CardContent } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
 import { Progress } from "~/components/ui/progress";
 import {
@@ -82,31 +84,172 @@ function searchFilterFn(
 interface RetryInputProps {
   defaultValue: string;
   onRetry: (name: string) => void;
+  showHint?: boolean;
 }
 
-function RetryInput({ defaultValue, onRetry }: RetryInputProps) {
+function RetryInput({ defaultValue, onRetry, showHint }: RetryInputProps) {
   const [value, setValue] = useState(defaultValue);
   return (
-    <div className="flex items-center gap-1.5">
-      <Input
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" && value.trim()) onRetry(value.trim());
-        }}
-        className="h-7 min-w-0 flex-1 text-xs"
-      />
-      <Button
-        variant="outline"
-        size="icon"
-        className="size-7 shrink-0"
-        disabled={!value.trim()}
-        onClick={() => onRetry(value.trim())}
-      >
-        <RotateCcw className="size-3" />
-        <span className="sr-only">Retry search</span>
-      </Button>
+    <div className="space-y-1">
+      {showHint && (
+        <p className="text-muted-foreground text-xs">
+          No BGG match found. Edit the name below and retry.
+        </p>
+      )}
+      <div className="flex items-center gap-1.5">
+        <Input
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && value.trim()) onRetry(value.trim());
+          }}
+          className="h-7 min-w-0 flex-1 text-xs"
+          placeholder="Edit game name and retry"
+        />
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-7 shrink-0 gap-1 px-2"
+          disabled={!value.trim()}
+          onClick={() => onRetry(value.trim())}
+        >
+          <RotateCcw className="size-3" />
+          Retry
+        </Button>
+      </div>
     </div>
+  );
+}
+
+function StatusBadge({ status }: { status: string }) {
+  const config = statusConfig[status];
+  if (!config) return null;
+  const isProcessing = status === "looking_up" || status === "searching_bgg";
+  return (
+    <Badge variant={config.variant}>
+      {isProcessing && <Loader2 className="size-3 animate-spin" />}
+      {config.label}
+    </Badge>
+  );
+}
+
+interface ScanResultCardProps {
+  game: ScannedGame;
+  isExpanded: boolean;
+  onToggleExpand: () => void;
+  onResolve: ScanResultsTableProps["onResolve"];
+  onSkip: ScanResultsTableProps["onSkip"];
+  onRetry: ScanResultsTableProps["onRetry"];
+  onDelete: ScanResultsTableProps["onDelete"];
+}
+
+function ScanResultCard({
+  game,
+  isExpanded,
+  onToggleExpand,
+  onResolve,
+  onSkip,
+  onRetry,
+  onDelete,
+}: ScanResultCardProps) {
+  const isAmbiguous = game.status === "ambiguous";
+  const showRetry = game.status === "not_found" || game.status === "error";
+
+  return (
+    <Card size="sm">
+      <CardContent className="flex items-center gap-3">
+        {game.thumbnail && (
+          <img
+            src={game.thumbnail}
+            alt={game.bggName ?? game.productTitle ?? ""}
+            className="size-16 shrink-0 rounded object-cover"
+            loading="lazy"
+          />
+        )}
+        <div className="min-w-0 flex-1 space-y-1.5">
+          <div className="flex items-start justify-between gap-2">
+            <StatusBadge status={game.status} />
+            <div className="flex items-center gap-2">
+              {game.yearPublished && (
+                <span className="text-muted-foreground text-xs">
+                  {game.yearPublished}
+                </span>
+              )}
+              {isAmbiguous && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="size-6"
+                  onClick={onToggleExpand}
+                  aria-expanded={isExpanded}
+                >
+                  <ChevronDown
+                    className={`size-4 transition-transform ${isExpanded ? "rotate-180" : ""}`}
+                  />
+                  <span className="sr-only">Toggle candidates</span>
+                </Button>
+              )}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-6 text-muted-foreground hover:text-destructive"
+                onClick={() => onDelete(game.id)}
+              >
+                <Trash2 className="size-3.5" />
+                <span className="sr-only">Delete</span>
+              </Button>
+            </div>
+          </div>
+
+          <p className="font-medium text-sm leading-snug">
+            {game.productTitle ?? game.barcode}
+          </p>
+
+          {game.bggName && game.bggId && (
+            <a
+              href={`https://boardgamegeek.com/boardgame/${game.bggId}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-muted-foreground text-xs hover:underline"
+            >
+              {game.bggName}
+              <ExternalLink className="size-3" />
+            </a>
+          )}
+
+          {isAmbiguous && !isExpanded && game.candidates && (
+            <p className="text-muted-foreground text-xs">
+              {game.candidates.length} matches — tap to expand
+            </p>
+          )}
+
+          {showRetry && (
+            <RetryInput
+              defaultValue={game.productTitle ?? game.barcode}
+              onRetry={(name) => onRetry(game.id, name)}
+              showHint
+            />
+          )}
+        </div>
+      </CardContent>
+
+      {isAmbiguous && isExpanded && game.candidates && (
+        <CardContent>
+          <DisambiguationRow
+            candidates={game.candidates}
+            searchName={game.productTitle ?? game.barcode}
+            onSelect={(bggId, bggName, yearPublished, thumbnail) => {
+              onResolve(game.id, bggId, bggName, yearPublished, thumbnail);
+              onToggleExpand();
+            }}
+            onSkip={() => {
+              onSkip(game.id);
+              onToggleExpand();
+            }}
+          />
+        </CardContent>
+      )}
+    </Card>
   );
 }
 
@@ -121,6 +264,7 @@ interface ScanResultsTableProps {
   ) => void;
   onSkip: (id: string) => void;
   onRetry: (id: string, name: string) => void;
+  onDelete: (id: string) => void;
 }
 
 export function ScanResultsTable({
@@ -128,6 +272,7 @@ export function ScanResultsTable({
   onResolve,
   onSkip,
   onRetry,
+  onDelete,
 }: ScanResultsTableProps) {
   const [expanded, setExpanded] = useState<ExpandedState>({});
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -158,19 +303,7 @@ export function ScanResultsTable({
     {
       accessorKey: "status",
       header: "Status",
-      cell: ({ row }) => {
-        const config = statusConfig[row.original.status];
-        if (!config) return null;
-        const isProcessing =
-          row.original.status === "looking_up" ||
-          row.original.status === "searching_bgg";
-        return (
-          <Badge variant={config.variant}>
-            {isProcessing && <Loader2 className="size-3 animate-spin" />}
-            {config.label}
-          </Badge>
-        );
-      },
+      cell: ({ row }) => <StatusBadge status={row.original.status} />,
       filterFn: (row, _columnId, filterValue) => {
         if (!filterValue || filterValue === "all") return true;
         return row.original.status === filterValue;
@@ -180,9 +313,19 @@ export function ScanResultsTable({
       accessorKey: "productTitle",
       header: "Product",
       cell: ({ row }) => (
-        <span className="max-w-48 truncate">
-          {row.original.productTitle ?? row.original.barcode}
-        </span>
+        <div className="flex items-center gap-2">
+          {row.original.thumbnail && (
+            <img
+              src={row.original.thumbnail}
+              alt=""
+              className="size-8 shrink-0 rounded object-cover"
+              loading="lazy"
+            />
+          )}
+          <span className="line-clamp-2">
+            {row.original.productTitle ?? row.original.barcode}
+          </span>
+        </div>
       ),
     },
     {
@@ -217,6 +360,22 @@ export function ScanResultsTable({
       accessorKey: "yearPublished",
       header: "Year",
       cell: ({ row }) => row.original.yearPublished ?? "",
+    },
+    {
+      id: "actions",
+      size: 40,
+      header: () => null,
+      cell: ({ row }) => (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="size-7 text-muted-foreground hover:text-destructive"
+          onClick={() => onDelete(row.original.id)}
+        >
+          <Trash2 className="size-3.5" />
+          <span className="sr-only">Delete</span>
+        </Button>
+      ),
     },
   ];
 
@@ -275,81 +434,117 @@ export function ScanResultsTable({
     toast.success("Copied to clipboard");
   };
 
+  const paginatedRows = table.getRowModel().rows;
+
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-2 text-muted-foreground text-sm">
-        <span>
-          Scanned: <strong className="text-foreground">{totalScanned}</strong>
-        </span>
-        <span>
-          Found: <strong className="text-foreground">{foundCount}</strong>
-        </span>
-        <span>
-          Ambiguous:{" "}
-          <strong className="text-foreground">{ambiguousCount}</strong>
-        </span>
-        <span>
-          Pending: <strong className="text-foreground">{pendingCount}</strong>
-        </span>
-        <span>
-          Failed: <strong className="text-foreground">{failedCount}</strong>
-        </span>
+    <div className="flex flex-col gap-3">
+      {/* Stats */}
+      <div className="flex items-center gap-1.5">
+        <Badge variant="default" className="tabular-nums">
+          {totalScanned} scanned
+        </Badge>
+        {foundCount > 0 && (
+          <Badge variant="success" className="tabular-nums">
+            {foundCount} found
+          </Badge>
+        )}
+        {ambiguousCount > 0 && (
+          <Badge variant="default" className="tabular-nums">
+            {ambiguousCount} ambiguous
+          </Badge>
+        )}
+        {pendingCount > 0 && (
+          <Badge variant="secondary" className="tabular-nums">
+            <Loader2 className="size-3 animate-spin" />
+            {pendingCount} pending
+          </Badge>
+        )}
+        {failedCount > 0 && (
+          <Badge variant="destructive" className="tabular-nums">
+            {failedCount} failed
+          </Badge>
+        )}
       </div>
 
       {pendingCount > 0 && <Progress value={progress} />}
 
-      <div className="flex flex-wrap items-center gap-2">
+      {/* Toolbar */}
+      <div className="flex flex-col gap-2">
         <Input
           placeholder="Search barcodes, titles, BGG names..."
           value={globalFilter}
           onChange={(e) => setGlobalFilter(e.target.value)}
-          className="max-w-xs"
         />
-        <Select
-          value={
-            (table.getColumn("status")?.getFilterValue() as string) ?? "all"
-          }
-          onValueChange={(value) =>
-            table
-              .getColumn("status")
-              ?.setFilterValue(value === "all" ? undefined : value)
-          }
-        >
-          <SelectTrigger className="w-36">
-            <SelectValue placeholder="Filter status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All</SelectItem>
-            <SelectItem value="found">Found</SelectItem>
-            <SelectItem value="ambiguous">Ambiguous</SelectItem>
-            <SelectItem value="not_found">Not Found</SelectItem>
-            <SelectItem value="skipped">Skipped</SelectItem>
-            <SelectItem value="error">Error</SelectItem>
-          </SelectContent>
-        </Select>
-        <div className="ml-auto flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleExportCsv}
-            disabled={exportableGames.length === 0}
+        <div className="flex gap-2">
+          <Select
+            value={
+              (table.getColumn("status")?.getFilterValue() as string) ?? "all"
+            }
+            onValueChange={(value) =>
+              table
+                .getColumn("status")
+                ?.setFilterValue(value === "all" ? undefined : value)
+            }
           >
-            <Download />
-            Export CSV
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleCopyClipboard}
-            disabled={exportableGames.length === 0}
-          >
-            <ClipboardCopy />
-            Copy
-          </Button>
+            <SelectTrigger className="w-28 shrink-0">
+              <SelectValue placeholder="Filter" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="found">Found</SelectItem>
+              <SelectItem value="ambiguous">Ambiguous</SelectItem>
+              <SelectItem value="not_found">Not Found</SelectItem>
+              <SelectItem value="skipped">Skipped</SelectItem>
+              <SelectItem value="error">Error</SelectItem>
+            </SelectContent>
+          </Select>
+          <div className="ml-auto flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExportCsv}
+              disabled={exportableGames.length === 0}
+            >
+              <Download />
+              Export CSV
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleCopyClipboard}
+              disabled={exportableGames.length === 0}
+            >
+              <ClipboardCopy />
+              Copy
+            </Button>
+          </div>
         </div>
       </div>
 
-      <div className="rounded-md border">
+      {/* Mobile: Card list */}
+      <div className="flex flex-col gap-2 md:hidden">
+        {paginatedRows.length > 0 ? (
+          paginatedRows.map((row) => (
+            <ScanResultCard
+              key={row.id}
+              game={row.original}
+              isExpanded={row.getIsExpanded()}
+              onToggleExpand={() => row.toggleExpanded()}
+              onResolve={onResolve}
+              onSkip={onSkip}
+              onRetry={onRetry}
+              onDelete={onDelete}
+            />
+          ))
+        ) : (
+          <p className="py-8 text-center text-muted-foreground text-sm">
+            No results.
+          </p>
+        )}
+      </div>
+
+      {/* Desktop: Table */}
+      <div className="hidden rounded-md border md:block">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -371,8 +566,8 @@ export function ScanResultsTable({
             ))}
           </TableHeader>
           <TableBody>
-            {table.getRowModel().rows.length > 0 ? (
-              table.getRowModel().rows.map((row) => (
+            {paginatedRows.length > 0 ? (
+              paginatedRows.map((row) => (
                 <Fragment key={row.id}>
                   <TableRow
                     aria-expanded={row.getIsExpanded() ? "true" : undefined}
@@ -433,50 +628,57 @@ export function ScanResultsTable({
         </Table>
       </div>
 
-      <div className="flex items-center justify-between">
-        <p className="text-muted-foreground text-sm">
-          Page {table.getState().pagination.pageIndex + 1} of{" "}
-          {table.getPageCount()}
-        </p>
-        <div className="flex items-center gap-1">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => table.setPageIndex(0)}
-            disabled={!table.getCanPreviousPage()}
-          >
-            <ChevronsLeft className="size-4" />
-            <span className="sr-only">First page</span>
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
-            <ChevronLeft className="size-4" />
-            <span className="sr-only">Previous page</span>
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
-            <ChevronRight className="size-4" />
-            <span className="sr-only">Next page</span>
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-            disabled={!table.getCanNextPage()}
-          >
-            <ChevronsRight className="size-4" />
-            <span className="sr-only">Last page</span>
-          </Button>
+      {/* Pagination */}
+      {table.getPageCount() > 1 && (
+        <div className="flex items-center justify-between">
+          <p className="text-muted-foreground text-xs">
+            Page {table.getState().pagination.pageIndex + 1} of{" "}
+            {table.getPageCount()}
+          </p>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="outline"
+              size="icon"
+              className="size-7"
+              onClick={() => table.setPageIndex(0)}
+              disabled={!table.getCanPreviousPage()}
+            >
+              <ChevronsLeft className="size-3.5" />
+              <span className="sr-only">First page</span>
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className="size-7"
+              onClick={() => table.previousPage()}
+              disabled={!table.getCanPreviousPage()}
+            >
+              <ChevronLeft className="size-3.5" />
+              <span className="sr-only">Previous page</span>
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className="size-7"
+              onClick={() => table.nextPage()}
+              disabled={!table.getCanNextPage()}
+            >
+              <ChevronRight className="size-3.5" />
+              <span className="sr-only">Next page</span>
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className="size-7"
+              onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+              disabled={!table.getCanNextPage()}
+            >
+              <ChevronsRight className="size-3.5" />
+              <span className="sr-only">Last page</span>
+            </Button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

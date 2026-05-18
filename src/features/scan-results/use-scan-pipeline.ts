@@ -94,5 +94,29 @@ export function useScanPipeline({
     await searchByName(id, name);
   };
 
-  return { processScan, retrySearch };
+  const addManualEntry = async (name: string) => {
+    const id = nanoid();
+
+    addResult({
+      id,
+      barcode: "",
+      barcodeFormat: "manual",
+      status: "searching_bgg",
+      productTitle: name,
+    });
+
+    await searchByName(id, name);
+  };
+
+  const addManualEntries = (input: string) => {
+    const names = input
+      .split(";")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    for (const name of names) {
+      addManualEntry(name);
+    }
+  };
+
+  return { processScan, retrySearch, addManualEntries };
 }
