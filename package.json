@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "start": "vite dev --port 6000",
+    "start": "vite dev --port 8000",
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",
@@ -11,7 +11,7 @@
     "check:eslint": "eslint --no-warn-ignored",
     "typecheck": "tsc --noEmit",
     "deploy": "bun run build && wrangler deploy",
-    "tunnel": "cloudflared tunnel --url http://localhost:6000",
+    "tunnel": "cloudflared tunnel --url http://localhost:8000",
     "postinstall": "lefthook install"
   },
   "dependencies": {

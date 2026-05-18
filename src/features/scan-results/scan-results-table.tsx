@@ -238,6 +238,7 @@ export function ScanResultsTable({
 
   const totalScanned = results.length;
   const foundCount = results.filter((r) => r.status === "found").length;
+  const ambiguousCount = results.filter((r) => r.status === "ambiguous").length;
   const pendingCount = results.filter(
     (r) => r.status === "looking_up" || r.status === "searching_bgg",
   ).length;
@@ -282,6 +283,10 @@ export function ScanResultsTable({
         </span>
         <span>
           Found: <strong className="text-foreground">{foundCount}</strong>
+        </span>
+        <span>
+          Ambiguous:{" "}
+          <strong className="text-foreground">{ambiguousCount}</strong>
         </span>
         <span>
           Pending: <strong className="text-foreground">{pendingCount}</strong>
