@@ -26,6 +26,7 @@ function Home() {
     results,
     addResult,
     updateResult,
+    removeResult,
   });
   const [manualInput, setManualInput] = useState("");
 
@@ -46,7 +47,7 @@ function Home() {
 
       <div className="flex gap-2">
         <Input
-          placeholder="Add games manually (separate with ;)"
+          placeholder="Add games (use ; for multiple)"
           value={manualInput}
           onChange={(e) => setManualInput(e.target.value)}
           onKeyDown={(e) => {

@@ -9,18 +9,33 @@ interface UseScanPipelineOptions {
   results: ScannedGame[];
   addResult: (game: ScannedGame) => void;
   updateResult: (id: string, patch: Partial<ScannedGame>) => void;
+  removeResult: (id: string) => void;
 }
 
 export function useScanPipeline({
   results,
   addResult,
   updateResult,
+  removeResult,
 }: UseScanPipelineOptions) {
+  const isDuplicateBggId = (id: string, bggId: number) => {
+    const existing = results.find((r) => r.bggId === bggId && r.id !== id);
+    if (existing) {
+      removeResult(id);
+      toast.info("Game already in results", {
+        description: existing.bggName ?? existing.productTitle,
+      });
+      return true;
+    }
+    return false;
+  };
+
   const searchByName = async (id: string, name: string) => {
     try {
       const match = await searchBgg({ data: name });
 
       if (match.status === "found") {
+        if (isDuplicateBggId(id, match.id)) return;
         const details = await fetchBggGameDetails({ data: [match.id] });
         const detail = details[0];
         updateResult(id, {

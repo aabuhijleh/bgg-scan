@@ -313,7 +313,7 @@ export function ScanResultsTable({
       accessorKey: "productTitle",
       header: "Product",
       cell: ({ row }) => (
-        <div className="flex items-center gap-2">
+        <div className="flex max-w-xs items-center gap-2">
           {row.original.thumbnail && (
             <img
               src={row.original.thumbnail}
@@ -322,7 +322,7 @@ export function ScanResultsTable({
               loading="lazy"
             />
           )}
-          <span className="line-clamp-2">
+          <span className="line-clamp-2 break-words">
             {row.original.productTitle ?? row.original.barcode}
           </span>
         </div>
@@ -501,7 +501,6 @@ export function ScanResultsTable({
           <div className="ml-auto flex gap-2">
             <Button
               variant="outline"
-              size="sm"
               onClick={handleExportCsv}
               disabled={exportableGames.length === 0}
             >
@@ -510,7 +509,6 @@ export function ScanResultsTable({
             </Button>
             <Button
               variant="outline"
-              size="sm"
               onClick={handleCopyClipboard}
               disabled={exportableGames.length === 0}
             >

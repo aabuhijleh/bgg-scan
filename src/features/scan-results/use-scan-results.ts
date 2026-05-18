@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "sonner";
 import type { ScannedGame } from "./scan-results.types";
 
 export function useScanResults() {
@@ -21,13 +22,27 @@ export function useScanResults() {
     yearPublished: number | null,
     thumbnail: string,
   ) => {
-    updateResult(id, {
-      status: "found",
-      bggId,
-      bggName,
-      yearPublished,
-      thumbnail,
-      candidates: undefined,
+    setResults((prev) => {
+      const duplicate = prev.find((r) => r.bggId === bggId && r.id !== id);
+      if (duplicate) {
+        toast.info("Game already in results", {
+          description: duplicate.bggName ?? duplicate.productTitle,
+        });
+        return prev.filter((r) => r.id !== id);
+      }
+      return prev.map((r) =>
+        r.id === id
+          ? {
+              ...r,
+              status: "found" as const,
+              bggId,
+              bggName,
+              yearPublished,
+              thumbnail,
+              candidates: undefined,
+            }
+          : r,
+      );
     });
   };
 
