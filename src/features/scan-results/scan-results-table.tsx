@@ -21,6 +21,7 @@ import {
   Loader2,
   RotateCcw,
   Trash2,
+  X,
 } from "lucide-react";
 import { Fragment, useState } from "react";
 import { toast } from "sonner";
@@ -168,7 +169,12 @@ function ScanResultCard({
         )}
         <div className="min-w-0 flex-1 space-y-1.5">
           <div className="flex items-start justify-between gap-2">
-            <StatusBadge status={game.status} />
+            <div className="space-y-1">
+              <StatusBadge status={game.status} />
+              {game.status === "searching_bgg" && game.error && (
+                <p className="text-muted-foreground text-xs">{game.error}</p>
+              )}
+            </div>
             <div className="flex items-center gap-2">
               {game.yearPublished && (
                 <span className="text-muted-foreground text-xs">
@@ -265,6 +271,8 @@ interface ScanResultsTableProps {
   onSkip: (id: string) => void;
   onRetry: (id: string, name: string) => void;
   onDelete: (id: string) => void;
+  isBatchActive?: boolean;
+  onCancelBatch?: () => void;
 }
 
 export function ScanResultsTable({
@@ -273,10 +281,13 @@ export function ScanResultsTable({
   onSkip,
   onRetry,
   onDelete,
+  isBatchActive,
+  onCancelBatch,
 }: ScanResultsTableProps) {
   const [expanded, setExpanded] = useState<ExpandedState>({});
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [globalFilter, setGlobalFilter] = useState("");
+  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 20 });
 
   const columns: ColumnDef<ScannedGame>[] = [
     {
@@ -303,7 +314,16 @@ export function ScanResultsTable({
     {
       accessorKey: "status",
       header: "Status",
-      cell: ({ row }) => <StatusBadge status={row.original.status} />,
+      cell: ({ row }) => (
+        <div className="space-y-1">
+          <StatusBadge status={row.original.status} />
+          {row.original.status === "searching_bgg" && row.original.error && (
+            <p className="text-muted-foreground text-xs">
+              {row.original.error}
+            </p>
+          )}
+        </div>
+      ),
       filterFn: (row, _columnId, filterValue) => {
         if (!filterValue || filterValue === "all") return true;
         return row.original.status === filterValue;
@@ -379,20 +399,30 @@ export function ScanResultsTable({
     },
   ];
 
+  const resetPagination = () =>
+    setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+
   const table = useReactTable({
     data: results,
     columns,
-    state: { expanded, columnFilters, globalFilter },
+    state: { expanded, columnFilters, globalFilter, pagination },
     onExpandedChange: setExpanded,
-    onColumnFiltersChange: setColumnFilters,
-    onGlobalFilterChange: setGlobalFilter,
+    onColumnFiltersChange: (updater) => {
+      setColumnFilters(updater);
+      resetPagination();
+    },
+    onGlobalFilterChange: (updater) => {
+      setGlobalFilter(updater);
+      resetPagination();
+    },
+    onPaginationChange: setPagination,
     globalFilterFn: searchFilterFn,
     getRowCanExpand: (row) => row.original.status === "ambiguous",
     getCoreRowModel: getCoreRowModel(),
     getExpandedRowModel: getExpandedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-    initialState: { pagination: { pageSize: 20 } },
+    autoResetPageIndex: false,
   });
 
   const totalScanned = results.length;
@@ -466,7 +496,17 @@ export function ScanResultsTable({
         )}
       </div>
 
-      {pendingCount > 0 && <Progress value={progress} />}
+      {pendingCount > 0 && (
+        <div className="flex items-center gap-2">
+          <Progress value={progress} className="flex-1" />
+          {isBatchActive && onCancelBatch && (
+            <Button variant="outline" size="sm" onClick={onCancelBatch}>
+              <X />
+              Cancel
+            </Button>
+          )}
+        </div>
+      )}
 
       {/* Toolbar */}
       <div className="flex flex-col gap-2">

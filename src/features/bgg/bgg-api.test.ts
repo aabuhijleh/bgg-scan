@@ -1,5 +1,149 @@
-import { describe, expect, it } from "vitest";
-import { findBestMatch, parseSearchXml, parseThingXml } from "./bgg-api";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import {
+  delay,
+  fetchGameDetails,
+  fetchSearchResults,
+  findBestMatch,
+  parseSearchXml,
+  parseThingXml,
+  RateLimitError,
+} from "./bgg-api";
+
+describe("delay", () => {
+  it("resolves after the specified time", async () => {
+    vi.useFakeTimers();
+    const promise = delay(500);
+    vi.advanceTimersByTime(500);
+    await expect(promise).resolves.toBeUndefined();
+    vi.useRealTimers();
+  });
+});
+
+describe("RateLimitError", () => {
+  it("has the correct name and message", () => {
+    const error = new RateLimitError();
+    expect(error.name).toBe("RateLimitError");
+    expect(error.message).toBe("Rate limited by BGG API (429)");
+    expect(error).toBeInstanceOf(Error);
+  });
+});
+
+describe("fetchSearchResults", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("throws RateLimitError on 429 response", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({ status: 429, ok: false }),
+    );
+    await expect(fetchSearchResults("Catan", "token")).rejects.toThrow(
+      RateLimitError,
+    );
+  });
+
+  it("throws Error on non-ok non-429 response", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        status: 500,
+        ok: false,
+        statusText: "Internal Server Error",
+      }),
+    );
+    await expect(fetchSearchResults("Catan", "token")).rejects.toThrow(
+      "BGG API error: 500 Internal Server Error",
+    );
+  });
+
+  it("returns XML text on success", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        status: 200,
+        ok: true,
+        text: () => Promise.resolve("<items></items>"),
+      }),
+    );
+    const result = await fetchSearchResults("Catan", "token");
+    expect(result).toBe("<items></items>");
+  });
+
+  it("sends correct query params and auth header", async () => {
+    const mockFetch = vi.fn().mockResolvedValue({
+      status: 200,
+      ok: true,
+      text: () => Promise.resolve(""),
+    });
+    vi.stubGlobal("fetch", mockFetch);
+
+    await fetchSearchResults("Catan", "my-token");
+
+    const [url, options] = mockFetch.mock.calls[0];
+    expect(url).toContain("/xmlapi2/search?");
+    expect(url).toContain("query=Catan");
+    expect(url).toContain("type=boardgame");
+    expect(options.headers.Authorization).toBe("Bearer my-token");
+  });
+});
+
+describe("fetchGameDetails", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("throws RateLimitError on 429 response", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({ status: 429, ok: false }),
+    );
+    await expect(fetchGameDetails([13], "token")).rejects.toThrow(
+      RateLimitError,
+    );
+  });
+
+  it("throws Error on non-ok non-429 response", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        status: 503,
+        ok: false,
+        statusText: "Service Unavailable",
+      }),
+    );
+    await expect(fetchGameDetails([13], "token")).rejects.toThrow(
+      "BGG API error: 503 Service Unavailable",
+    );
+  });
+
+  it("returns XML text on success", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        status: 200,
+        ok: true,
+        text: () => Promise.resolve("<items></items>"),
+      }),
+    );
+    const result = await fetchGameDetails([13, 278], "token");
+    expect(result).toBe("<items></items>");
+  });
+
+  it("joins IDs with commas in the request", async () => {
+    const mockFetch = vi.fn().mockResolvedValue({
+      status: 200,
+      ok: true,
+      text: () => Promise.resolve(""),
+    });
+    vi.stubGlobal("fetch", mockFetch);
+
+    await fetchGameDetails([13, 278, 999], "my-token");
+
+    const [url] = mockFetch.mock.calls[0];
+    expect(url).toContain("id=13%2C278%2C999");
+  });
+});
 
 describe("parseSearchXml", () => {
   it("returns empty array for empty XML", () => {

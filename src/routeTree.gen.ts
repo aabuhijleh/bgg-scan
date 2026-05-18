@@ -10,33 +10,53 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiBggSearchRouteImport } from './routes/api/bgg/search'
+import { Route as ApiBggDetailsRouteImport } from './routes/api/bgg/details'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiBggSearchRoute = ApiBggSearchRouteImport.update({
+  id: '/api/bgg/search',
+  path: '/api/bgg/search',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiBggDetailsRoute = ApiBggDetailsRouteImport.update({
+  id: '/api/bgg/details',
+  path: '/api/bgg/details',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/api/bgg/details': typeof ApiBggDetailsRoute
+  '/api/bgg/search': typeof ApiBggSearchRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/api/bgg/details': typeof ApiBggDetailsRoute
+  '/api/bgg/search': typeof ApiBggSearchRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/api/bgg/details': typeof ApiBggDetailsRoute
+  '/api/bgg/search': typeof ApiBggSearchRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/api/bgg/details' | '/api/bgg/search'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/api/bgg/details' | '/api/bgg/search'
+  id: '__root__' | '/' | '/api/bgg/details' | '/api/bgg/search'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ApiBggDetailsRoute: typeof ApiBggDetailsRoute
+  ApiBggSearchRoute: typeof ApiBggSearchRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +68,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/bgg/search': {
+      id: '/api/bgg/search'
+      path: '/api/bgg/search'
+      fullPath: '/api/bgg/search'
+      preLoaderRoute: typeof ApiBggSearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/bgg/details': {
+      id: '/api/bgg/details'
+      path: '/api/bgg/details'
+      fullPath: '/api/bgg/details'
+      preLoaderRoute: typeof ApiBggDetailsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ApiBggDetailsRoute: ApiBggDetailsRoute,
+  ApiBggSearchRoute: ApiBggSearchRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

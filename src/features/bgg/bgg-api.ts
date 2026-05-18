@@ -145,3 +145,7 @@ export async function fetchGameDetails(
     throw new Error(`BGG API error: ${response.status} ${response.statusText}`);
   return response.text();
 }
+
+export function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
