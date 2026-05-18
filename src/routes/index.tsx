@@ -2,8 +2,12 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
 import { useState } from "react";
 import { ThemeToggle } from "~/components/theme-toggle";
-import { Button } from "~/components/ui/button";
-import { Input } from "~/components/ui/input";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+} from "~/components/ui/input-group";
 import { ScanResultsTable } from "~/features/scan-results/scan-results-table";
 import { useScanPipeline } from "~/features/scan-results/use-scan-pipeline";
 import { useScanResults } from "~/features/scan-results/use-scan-results";
@@ -45,25 +49,32 @@ function Home() {
 
       <ScannerPanel onBarcodeDetected={processScan} />
 
-      <div className="flex gap-2">
-        <Input
-          placeholder="Add games (use ; for multiple)"
+      <div className="flex items-center gap-3">
+        <div className="h-px flex-1 bg-border" />
+        <span className="text-muted-foreground text-xs">or add manually</span>
+        <div className="h-px flex-1 bg-border" />
+      </div>
+
+      <InputGroup>
+        <InputGroupInput
+          placeholder="e.g. Catan; Ticket to Ride; Azul"
           value={manualInput}
           onChange={(e) => setManualInput(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === "Enter") handleManualAdd();
           }}
-          className="min-w-0 flex-1"
         />
-        <Button
-          onClick={handleManualAdd}
-          disabled={!manualInput.trim()}
-          className="shrink-0"
-        >
-          <Plus />
-          Add
-        </Button>
-      </div>
+        <InputGroupAddon align="inline-end">
+          <InputGroupButton
+            onClick={handleManualAdd}
+            disabled={!manualInput.trim()}
+            variant="default"
+          >
+            <Plus />
+            Add
+          </InputGroupButton>
+        </InputGroupAddon>
+      </InputGroup>
 
       {results.length > 0 && (
         <ScanResultsTable
