@@ -11,6 +11,9 @@ const config = defineConfig({
   optimizeDeps: {
     exclude: ["fsevents"],
   },
+  server: {
+    allowedHosts: true,
+  },
   plugins: [
     devtools(),
     cloudflare({ viteEnvironment: { name: "ssr" } }),

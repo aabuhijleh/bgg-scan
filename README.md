@@ -1,103 +1,32 @@
-# my-ts-template
+# BGG Scan
 
-A TanStack Start template with React 19, shadcn/ui, and a full dev toolchain ready to go.
+Scan board game barcodes with your phone camera and identify them on [BoardGameGeek](https://boardgamegeek.com).
 
-## Tech Stack
+## How It Works
 
-- **Framework:** [TanStack Start](https://tanstack.com/start) (React 19 + React Compiler)
-- **Routing:** [TanStack Router](https://tanstack.com/router) (file-based, SSR-ready)
-- **Data:** [TanStack Query](https://tanstack.com/query) (server state) + [TanStack Form](https://tanstack.com/form) (form state with Zod validation)
-- **UI:** [shadcn/ui](https://ui.shadcn.com) (radix-nova preset, 52 components pre-installed)
-- **Styling:** [Tailwind CSS 4](https://tailwindcss.com) + Inter font
-- **Linting:** [Biome](https://biomejs.dev) (formatting + linting) + ESLint (React hooks)
-- **Testing:** [Vitest](https://vitest.dev) + [Testing Library](https://testing-library.com)
-- **Runtime:** [Bun](https://bun.sh)
+1. Open the app on your phone and tap **Start Scanning**
+2. Point your camera at a board game barcode
+3. The app looks up the barcode, finds the game on BGG, and adds it to your list
+4. If multiple matches are found, pick the right one from the options shown
+5. Keep scanning as many games as you want
+6. Export your list as CSV or copy to clipboard
 
-## Using This Template
-
-1. **Copy or clone** this repo into your project directory:
-
-   ```bash
-   cp -r my-ts-template my-new-app
-   cd my-new-app
-   ```
-
-2. **Rename the project** in `package.json` and `.cta.json`:
-
-   ```bash
-   # Update "name" in package.json
-   # Update "projectName" in .cta.json
-   ```
-
-3. **Update the page title** in `src/routes/__root.tsx` (the `title` meta tag).
-
-4. **Install dependencies and start dev server:**
-
-   ```bash
-   bun install
-   bun dev
-   ```
-
-5. Open `http://localhost:3000` — you should see a Hello World card with a theme toggle.
-
-## Scripts
-
-| Command | Description |
-| --- | --- |
-| `bun dev` | Start dev server on port 3000 |
-| `bun run build` | Production build |
-| `bun run preview` | Preview production build |
-| `bun run test` | Run tests (Vitest) |
-| `bun run check:biome` | Lint and format (Biome) |
-| `bun run check:eslint` | Lint React hooks (ESLint) |
-| `bun run typecheck` | Type-check (TypeScript) |
-| `bun run deploy` | Build and deploy to Cloudflare Workers |
-
-## Project Structure
-
-```text
-src/
-├── routes/           # File-based routes (TanStack Router)
-│   ├── __root.tsx    # Root layout (theme, providers, 404)
-│   └── index.tsx     # Home page (Hello World)
-├── components/
-│   ├── ui/           # shadcn/ui components (52 pre-installed)
-│   ├── theme-provider.tsx
-│   └── theme-toggle.tsx
-├── hooks/            # Shared hooks
-├── integrations/     # TanStack Query provider + devtools
-├── lib/              # Utilities (cn, etc.)
-├── styles.css        # Tailwind config + theme variables
-├── env.ts            # Environment variable validation (t3-env)
-└── router.tsx        # Router instance
-```
-
-## Adding shadcn Components
-
-All 52 shadcn components are already installed. To add new ones:
+## Setup
 
 ```bash
-bunx shadcn@latest add <component-name>
+bun install
+cp .env.example .env
+bun dev
 ```
 
-## Deploy to Cloudflare Workers
+Add your BGG XML API bearer token to `.env` — get one at [boardgamegeek.com/applications](https://boardgamegeek.com/applications). Optionally add a UPC Item DB API key for higher rate limits.
 
-This project uses the Cloudflare Vite plugin (configured in `vite.config.ts`) and `wrangler.jsonc`:
+Open `http://localhost:3000`. To access from your phone, run `bun run tunnel` to get a public Cloudflared URL.
 
-1. Install Wrangler: `bun add -g wrangler`
-2. Authenticate: `wrangler login`
-3. Deploy: `bun run deploy`
+## Deploy
 
-For production env vars, run `wrangler secret put MY_VAR` for each secret listed in `.env.example`. Public (non-secret) vars go in `wrangler.jsonc` under `vars`.
+```bash
+bun run deploy
+```
 
-KV, D1, R2, and Durable Object bindings are configured in `wrangler.jsonc` — see https://developers.cloudflare.com/workers/wrangler/configuration/.
-
-## Conventions
-
-- **Always use `bun`/`bunx`.** No npm, yarn, or pnpm.
-- **Absolute imports** with `~/` prefix (e.g., `~/components/ui/button`).
-- **Biome** for formatting and linting. Run `bun run check` before committing.
-- **No `useEffect`** unless escape hatch. No `useMemo`/`useCallback` — React Compiler handles it.
-- **Zod** for all validation.
-- **Feature folders** for self-contained features: `*.server.ts` (server functions), `use-*.ts` (hooks), `*.tsx` (UI).
-- **Tailwind sizing:** use `size-x` instead of `h-x w-x` for square dimensions.
+Deploys to Cloudflare Workers. Set the required secret with `wrangler secret put BGG_XML_API_BEARER_TOKEN`. Optionally set `wrangler secret put UPC_ITEM_DB_API_KEY` for the paid UPC API tier.

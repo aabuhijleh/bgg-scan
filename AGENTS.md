@@ -8,12 +8,13 @@ NOTE: `CLAUDE.md` is a symlink to `AGENTS.md`.
 
 ## Project Overview
 
-TanStack Start template with React 19, shadcn/ui, and a full dev toolchain. Currently a Hello World — add your features in `src/routes/` and `src/features/`.
+Mobile-first board game barcode scanner. Users scan barcodes with their phone camera, the app identifies games on BoardGameGeek via UPC lookup + BGG XML API, and results accumulate in a filterable table with CSV export.
 
 ## Architecture
 
-- **Frontend:** React 19 (with React Compiler), TanStack Router (file-based), TanStack Query, TanStack Form, shadcn/ui + Tailwind CSS 4
-- **Server:** TanStack Start server functions (`createServerFn`) for RPC
+- **Frontend:** React 19 (with React Compiler), TanStack Router (file-based), TanStack Table, shadcn/ui + Tailwind CSS 4
+- **Server:** TanStack Start server functions (`createServerFn`) for UPC and BGG API calls
+- **APIs:** UPC Item DB (barcode → product info), BGG XML API v2 (game search + details)
 - **Config:** t3-env for environment variable validation
 
 ## Project Structure
@@ -22,8 +23,13 @@ TanStack Start template with React 19, shadcn/ui, and a full dev toolchain. Curr
 src/
 ├── routes/                     # TanStack Router file-based routes
 │   ├── __root.tsx              # Root layout
-│   └── index.tsx               # Home page
-├── features/                   # Feature modules (create as needed)
+│   └── index.tsx               # Main page (scanner + results table)
+├── features/
+│   ├── scanner/                # Camera + barcode detection (barcode-detector ponyfill)
+│   ├── lookup/                 # UPC Item DB API (barcode → product title)
+│   ├── bgg/                    # BGG XML API (search + game details + matching)
+│   ├── scan-results/           # Results state, pipeline, table, disambiguation
+│   └── export/                 # CSV generation + clipboard copy
 ├── lib/                        # Shared utilities
 └── components/ui/              # shadcn components
 ```
