@@ -61,7 +61,7 @@ const statusConfig: Record<
   }
 > = {
   looking_up: { label: "Looking up...", variant: "secondary" },
-  searching_bgg: { label: "Searching...", variant: "secondary" },
+  searching_bgg: { label: "Searching", variant: "secondary" },
   found: { label: "Found", variant: "success" },
   ambiguous: { label: "Ambiguous", variant: "default" },
   not_found: { label: "Not Found", variant: "destructive" },
@@ -333,7 +333,7 @@ export function ScanResultsTable({
       accessorKey: "productTitle",
       header: "Product",
       cell: ({ row }) => (
-        <div className="flex max-w-xs items-center gap-2">
+        <div className="flex min-w-0 items-center gap-2">
           {row.original.thumbnail && (
             <img
               src={row.original.thumbnail}
@@ -342,7 +342,7 @@ export function ScanResultsTable({
               loading="lazy"
             />
           )}
-          <span className="line-clamp-2 break-words">
+          <span className="truncate">
             {row.original.productTitle ?? row.original.barcode}
           </span>
         </div>
@@ -368,10 +368,10 @@ export function ScanResultsTable({
             href={`https://boardgamegeek.com/boardgame/${bggId}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-sm hover:underline"
+            className="inline-flex max-w-full items-center gap-1 text-sm hover:underline"
           >
-            {bggName}
-            <ExternalLink className="size-3" />
+            <span className="truncate">{bggName}</span>
+            <ExternalLink className="size-3 shrink-0" />
           </a>
         );
       },
@@ -597,7 +597,7 @@ export function ScanResultsTable({
 
       {/* Desktop: Table */}
       <div className="hidden rounded-md border md:block">
-        <Table>
+        <Table className="table-fixed">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
@@ -625,7 +625,7 @@ export function ScanResultsTable({
                     aria-expanded={row.getIsExpanded() ? "true" : undefined}
                   >
                     {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>
+                      <TableCell key={cell.id} className="overflow-hidden">
                         {flexRender(
                           cell.column.columnDef.cell,
                           cell.getContext(),
