@@ -557,6 +557,20 @@ export function ScanResultsTable({
             </Button>
           </div>
         </div>
+        {exportableGames.length > 0 && (
+          <p className="text-muted-foreground text-xs">
+            Tip: Export or copy your list and use it with{" "}
+            <a
+              href="https://github.com/aabuhijleh/bgg-collection-updater"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline hover:text-foreground"
+            >
+              bgg-collection-updater
+            </a>{" "}
+            to bulk-add games to your BGG collection.
+          </p>
+        )}
       </div>
 
       {/* Mobile: Card list */}
