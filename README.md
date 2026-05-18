@@ -16,12 +16,12 @@ Scan board game barcodes with your phone camera and identify them on [BoardGameG
 ```bash
 bun install
 cp .env.example .env
-bun dev
+bun start
 ```
 
 Add your BGG XML API bearer token to `.env` — get one at [boardgamegeek.com/applications](https://boardgamegeek.com/applications). Optionally add a UPC Item DB API key for higher rate limits.
 
-Open `http://localhost:3000`. To access from your phone, run `bun run tunnel` to get a public Cloudflared URL.
+Open `http://localhost:6000`. To access from your phone, run `bun run tunnel` to get a public Cloudflared URL.
 
 ## Deploy
 
