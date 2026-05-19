@@ -1,5 +1,7 @@
 import { AlertTriangle, Camera, ScanBarcode } from "lucide-react";
 import { useEffect, useRef } from "react";
+import { useSound } from "react-sounds";
+import { toast } from "sonner";
 import { Button } from "~/components/ui/button";
 import {
   Select,
@@ -28,6 +30,7 @@ export function ScannerPanel({
     switchCamera,
   } = useBarcodeScanner();
 
+  const { play: playSuccessBlip } = useSound("ui/success_blip");
   const prevCountRef = useRef(0);
 
   useEffect(() => {
@@ -35,9 +38,13 @@ export function ScannerPanel({
       for (let i = prevCountRef.current; i < results.length; i++) {
         onBarcodeDetected(results[i]);
       }
+      playSuccessBlip();
+      toast.success("Barcode detected", {
+        description: results[results.length - 1].rawValue,
+      });
       prevCountRef.current = results.length;
     }
-  }, [results, onBarcodeDetected]);
+  }, [results, onBarcodeDetected, playSuccessBlip]);
 
   return (
     <div className="flex flex-col gap-3">
