@@ -39,3 +39,7 @@ bun run deploy
 ```
 
 Deploys to Cloudflare Workers. Set the required secret with `wrangler secret put BGG_XML_API_BEARER_TOKEN`. Optionally set `wrangler secret put UPC_ITEM_DB_API_KEY` for the paid UPC API tier.
+
+## Related
+
+**[BGG Collection Updater](https://github.com/aabuhijleh/bgg-collection-updater)** -- Bulk-add board games to your BoardGameGeek collection. Search games by name to find their BGG IDs, or paste IDs directly, then add them all to your collection in one go. Runs locally on your machine using browser automation. Pair it with this app: scan barcodes here, then paste the matched BGG IDs into the updater to add them to your collection.
