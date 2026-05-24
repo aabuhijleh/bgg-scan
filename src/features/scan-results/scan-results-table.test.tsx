@@ -137,7 +137,7 @@ describe("ScanResultsTable", () => {
       expect(screen.getByText(/Page 2 of 3/)).toBeDefined();
 
       const searchInput = screen.getByPlaceholderText(
-        "Search barcodes, titles, BGG names...",
+        "Search titles, BGG names...",
       );
       await user.type(searchInput, "Azul");
 

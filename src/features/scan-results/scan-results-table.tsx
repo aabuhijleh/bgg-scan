@@ -77,8 +77,7 @@ function searchFilterFn(
   const query = filterValue.toLowerCase();
   return (
     (row.original.productTitle?.toLowerCase().includes(query) ?? false) ||
-    (row.original.bggName?.toLowerCase().includes(query) ?? false) ||
-    row.original.barcode.includes(query)
+    (row.original.bggName?.toLowerCase().includes(query) ?? false)
   );
 }
 
@@ -511,7 +510,7 @@ export function ScanResultsTable({
       {/* Toolbar */}
       <div className="flex flex-col gap-2">
         <Input
-          placeholder="Search barcodes, titles, BGG names..."
+          placeholder="Search titles, BGG names..."
           value={globalFilter}
           onChange={(e) => setGlobalFilter(e.target.value)}
         />
